@@ -48,4 +48,11 @@ static const char encryption_context[hydro_secretbox_CONTEXTBYTES] = "!INMPX!";
 static const unsigned int encryption_time_divison = 2;
 #endif
 
+/* Comment / Uncomment this line to use read(2) instead of libevdev_next_event
+ * I have encountered some issues with libevdev_next_event on some devices. Not all the events were being dispatched.
+ * Prefer enabling this flag only if you notice this kind of problem beacause going through libevdev is the recommanded
+ * way.
+ */
+// #define DONT_USE_LIBEVDEV_FOR_READING
+
 #endif

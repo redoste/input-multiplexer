@@ -213,14 +213,28 @@ static void switch_client(void) {
 
 static void* handle_one_device_thread(void* device_index_as_void) {
 	size_t device_index = (size_t)device_index_as_void;
+#ifdef DONT_USE_LIBEVDEV_FOR_READING
+	int fd = libevdev_get_fd(devices_libev[device_index]);
+#endif
 
 	for (;;) {
 		struct input_event ev;
+#ifdef DONT_USE_LIBEVDEV_FOR_READING
+		int ret = read(fd, &ev, sizeof(ev));
+		if (ret < 0) {
+			perror("read");
+			return NULL;
+		} else if (ret != sizeof(ev)) {
+			fprintf(stderr, "read: Didn't supply a full input_event\n");
+			return NULL;
+		} else {
+#else
 		int ret = libevdev_next_event(devices_libev[device_index], LIBEVDEV_READ_FLAG_NORMAL, &ev);
 		if (ret < 0) {
 			fprintf(stderr, "libevdev_next_event: %s\n", strerror(-ret));
 			return NULL;
 		} else {
+#endif
 			struct event_message message_to_send = {
 				.device_id = devices[device_index].device_id,
 				.event_type = ev.type,
