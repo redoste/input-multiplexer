@@ -203,11 +203,26 @@ static int recv_message(int listening_socket, struct event_message* recved_messa
 		fprintf(stderr, "read: EOF\n");
 		return -1;
 	}
-	if (hydro_secretbox_decrypt(recved_message, encrypted_message, sizeof(encrypted_message),
-				    time(NULL) / encryption_time_divison, encryption_context, encryption_key) != 0) {
-		fprintf(stderr, "hydro_secretbox_decrypt: Invalid authentication tag");
+
+	uint64_t msg_id_base = time(NULL) / encryption_time_divison;
+	uint64_t msg_ids[] = {
+		msg_id_base + +0,
+		msg_id_base + -1,
+		msg_id_base + +1,
+	};
+	int valid_authentication_tag = 0;
+	for (size_t i = 0; i < sizeof(msg_ids) / sizeof(msg_ids[0]); i++) {
+		if (hydro_secretbox_decrypt(recved_message, encrypted_message, sizeof(encrypted_message), msg_ids[i],
+					    encryption_context, encryption_key) == 0) {
+			valid_authentication_tag = 1;
+			break;
+		}
+	}
+	if (!valid_authentication_tag) {
+		fprintf(stderr, "hydro_secretbox_decrypt: Invalid authentication tag\n");
 		return -1;
 	}
+
 #else
 	ssize_t read_bytes;
 	read_bytes = read(listening_socket, recved_message, sizeof(struct event_message));

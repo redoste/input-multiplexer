@@ -44,8 +44,16 @@ static const struct device_config devices[] = {
 /* You can generate a key using the `keygen` tool available in the repository */
 static const char encryption_key_path[] = "./key";
 static const char encryption_context[hydro_secretbox_CONTEXTBYTES] = "!INMPX!";
-/* Allowed delta in seconds beetween client's and server's clock */
-static const unsigned int encryption_time_divison = 2;
+
+/* Current timestamp is divided by encryption_time_divison before being used as a message_id. The client will accept the
+ * current message_id, the next one and the previous one, thus setting it to 1 will allow a window beetween 1 and 3
+ * seconds for a message to be received. (see recv_message in controlled.c for more informations).  It's recommended to
+ * keep this value as low as possible to prevent a malicious party from replaying an event.
+ *
+ * TL;DR : set this value to the lowest value you can, if you've some network issues producing "Invalid
+ * authentication tag" errors, try increasing it but keep it under 3 to be safe.
+ */
+static const unsigned int encryption_time_divison = 1;
 #endif
 
 /* Comment / Uncomment this line to use read(2) instead of libevdev_next_event
